@@ -1,0 +1,38 @@
+using System;
+using NUnit.Framework;
+using static Manipulation.Manipulator;
+
+namespace Manipulation;
+
+public static class ManipulatorTask
+{
+	/// <summary>
+	/// Возвращает массив углов (shoulder, elbow, wrist),
+	/// необходимых для приведения эффектора манипулятора в точку x и y 
+	/// с углом между последним суставом и горизонталью, равному alpha (в радианах)
+	/// См. чертеж manipulator.png!
+	/// </summary>
+	public static double[] MoveManipulatorTo(double x, double y, double alpha)
+	{
+        var wristY = y + Math.Sin(Math.PI - alpha) * Palm;
+        var wristX = x + Math.Cos(Math.PI - alpha) * Palm;
+        var temp = Math.Sqrt(wristY * wristY + wristX * wristX);
+        var elbow = TriangleTask.GetABAngle(UpperArm, Forearm, temp);
+        var shoulder = TriangleTask.GetABAngle(UpperArm, temp, Forearm) + Math.Atan2(wristY, wristX);
+        var wrist = 3 * Math.PI - shoulder - elbow - alpha - Math.PI;
+
+        if (double.IsNaN(shoulder) || double.IsNaN(elbow) || double.IsNaN(wrist))
+            return new[] { double.NaN, double.NaN, double.NaN };
+        else
+            return new[] { shoulder, elbow, wrist };
+	}
+}
+
+[TestFixture]
+public class ManipulatorTask_Tests
+{
+	[Test]
+	public void TestMoveManipulatorTo()
+	{
+	}
+}
