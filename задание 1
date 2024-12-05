@@ -1,0 +1,46 @@
+using System;
+using Avalonia;
+using NUnit.Framework;
+using static Manipulation.Manipulator;
+
+
+namespace Manipulation;
+
+public static class AnglesToCoordinatesTask
+{
+    /// <summary>
+    /// По значению углов суставов возвращает массив координат суставов
+    /// в порядке new []{elbow, wrist, palmEnd}
+    /// </summary>
+    public static Point[] GetJointPositions(double shoulder, double elbow, double wrist)
+    {
+        var elbowHorizont = elbow - (Math.PI - shoulder);
+        var wristHorizont = wrist - (Math.PI - elbowHorizont);
+        var elbowPos = new Point(UpperArm * Math.Cos(shoulder), UpperArm * Math.Sin(shoulder));
+        var wristPos = new Point(elbowPos.X + Forearm * Math.Cos(elbowHorizont),
+            elbowPos.Y + Forearm * Math.Sin(elbowHorizont));
+        var palmEndPos = new Point(wristPos.X + Palm * Math.Cos(wristHorizont),
+            wristPos.Y + Palm * Math.Sin(wristHorizont));
+        return new[]
+        {
+            elbowPos,
+            wristPos,
+            palmEndPos
+        };
+    }
+}
+
+[TestFixture]
+public class AnglesToCoordinatesTask_Tests
+{
+    [TestCase(Math.PI / 2, Math.PI / 2, Math.PI, Forearm + Palm, UpperArm)]
+    [TestCase(Math.PI / 2, Math.PI / 2, Math.PI / 2, Forearm, UpperArm - Palm)]
+    [TestCase(Math.PI / 2, 3 * Math.PI / 2, 3 * Math.PI / 2, -Forearm, UpperArm - Palm)]
+    [TestCase(Math.PI / 2, Math.PI, 3 * Math.PI, 0, Forearm + UpperArm + Palm)]
+    public void TestGetJointPositions(double shoulder, double elbow, double wrist, double palmEndX, double palmEndY)
+	{
+		var joints = AnglesToCoordinatesTask.GetJointPositions(shoulder, elbow, wrist);
+        Assert.AreEqual(palmEndX, joints[2].X, 1e-5, "palm endX");
+        Assert.AreEqual(palmEndY, joints[2].Y, 1e-5, "palm endY");
+    }
+}
